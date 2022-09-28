@@ -1,13 +1,12 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ /*File: UserType.java
+ * @author Group 4(Andrew J. Martino, Kyle Pope, Rob Miller)
+ * Create Date: 9/27/2022
+ * Purpose: Enum Class for the User class
+ * 
+ * Revision History:
+ * Andrew - Add enum class with ADMIN, LIRARAYMEMBER 
  */
-
-/**
- *
- * @author MegaB
- */
-public class UserType {
+enum UserType {
+    ADMIN, LIBRARYMEMBER
     
-}
+};//needed to work in the program
