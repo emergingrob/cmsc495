@@ -2,7 +2,6 @@
 //Author: Kyle Pope
 //Date: 10/4/2022
 //Purpose: Create a class to log in
-package test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,7 +14,7 @@ import java.io.IOException;
 public class UserTest {
 
     // ENSURE YOU CHANGE THE FILE LOCATION TO MATCH THE USER'S COMPUTER PATH
-    private static final String FILE_PATH = "C:\\Users\\The Pope\\test.txt";
+    private static final String FILE_PATH = "H:\\test.txt";
     private static Scanner file;
     static int rows;
 
@@ -38,6 +37,7 @@ public class UserTest {
                 Arrays.fill(items, null); // to clear out the 'items' array
             }
             String[][] stringArray = loginInfo.stream().map(u -> u.toArray(new String[0])).toArray(String[][]::new);
+            System.out.print("String array" + stringArray[1][1]);
             return stringArray;
         } catch (FileNotFoundException e) {
             System.out.println("File was not found, ensure the file path is correct");
@@ -63,9 +63,36 @@ public class UserTest {
             System.out.println("File was not found, ensure the file path is correct");
         }
     }
+    
+    public static boolean login(String username, String password) {
+        String[][] userInfo = UserInfo();
+        //System.out.println("User" + userInfo[0][1]);
+        int row = userInfo.length;
+        int count = 0;
+        for (int i = 1; i < row; i++) {
+            // this pulls the account types
+            String accountType = userInfo[i][0];
+            // this pulls the username
+            String ucheck = userInfo[i][1];
+            // this pulls the password
+            String pCheck = userInfo[i][2];
+            // if username matches password then success
+            if (ucheck.equals(username) && pCheck.equals(password)) {
+                return true;
+            } else {
+                count++;
+            }
+            // if the end of the file is reached without a login then the login fails
+            if (count == row) {
+                System.out.println("Login Failed");            }
+        }
+        
+        return false;
+    }
 
     // main method that asks for password/username and logs in the user if successful.
     public static void main(String[] args) throws FileNotFoundException {
+    	/*
         Scanner scan = new Scanner(System.in);
         System.out.println("Please enter your username:");
         String username = scan.nextLine();
@@ -93,5 +120,6 @@ public class UserTest {
                 System.out.println("Login Failed");
             }
         }
+        */
     }
 }
