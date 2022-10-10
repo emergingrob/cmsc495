@@ -3,6 +3,9 @@
 //Date: 10/4/2022
 //Purpose: Create a class to log in
 
+// Updated 10//09/22 by Robert Miller
+// Added check to see if user text file exists, and if it doesn't, create one with an admin user
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -10,16 +13,23 @@ import java.util.Arrays;
 import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 
 public class UserTest {
 
-    // ENSURE YOU CHANGE THE FILE LOCATION TO MATCH THE USER'S COMPUTER PATH
-    private static final String FILE_PATH = "H:\\test.txt";
+    private static final String FILE_PATH = System.getProperty("user.dir") + "/users.txt";
     private static Scanner file;
     static int rows;
-
+    public static boolean isAdmin = false;
+    
     // Method to pull the user account details from the .txt file
     public static String[][] UserInfo() {
+    	// create users text if none exists
+    	File f = new File(FILE_PATH);
+    	if(!f.exists()) { 
+    	    createUsersText();
+    	}
         // create a 2d arraylist to store login information of variable length
         ArrayList<ArrayList<String>> loginInfo = new ArrayList<>();
         try {
@@ -37,16 +47,18 @@ public class UserTest {
                 Arrays.fill(items, null); // to clear out the 'items' array
             }
             String[][] stringArray = loginInfo.stream().map(u -> u.toArray(new String[0])).toArray(String[][]::new);
-            System.out.print("String array" + stringArray[1][1]);
+            //System.out.print("String array" + stringArray[1][1]);
             return stringArray;
         } catch (FileNotFoundException e) {
-            System.out.println("File was not found, ensure the file path is correct");
+            System.out.println("File was not found, unable to create");
             return null;
         }
     }
 
     // Method to add a new user to the .txt document, ensure accountType is a for admin, or u for user
     public static void AddUser(String accountType, String newName, String newPass) {
+    	String[][] userInfo = UserInfo();
+    	
         try {
             // ensures it is a valid account type
             if (accountType.equals("a") || accountType.equals("u")) {
@@ -61,6 +73,7 @@ public class UserTest {
             }
         } catch (IOException e) {
             System.out.println("File was not found, ensure the file path is correct");
+            //createUsersText();
         }
     }
     
@@ -69,9 +82,12 @@ public class UserTest {
         //System.out.println("User" + userInfo[0][1]);
         int row = userInfo.length;
         int count = 0;
-        for (int i = 1; i < row; i++) {
+        for (int i = 0; i < row; i++) {
             // this pulls the account types
-            String accountType = userInfo[i][0];
+        	
+            String account = userInfo[i][0];
+            if (account.equals("a"))
+            	isAdmin = true;
             // this pulls the username
             String ucheck = userInfo[i][1];
             // this pulls the password
@@ -89,7 +105,49 @@ public class UserTest {
         
         return false;
     }
-
+    
+    public static void createUsersText() {
+    	
+        PrintWriter writer = null;
+		try {
+			writer = new PrintWriter(FILE_PATH, "UTF-8");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        writer.println("a admin admin");
+        writer.close();
+    }
+    
+    public static void updatePassword(String username, String oldPassword, String newPassword) {
+        String[][] userInfo = UserInfo();
+        //System.out.println("User" + userInfo[0][1]);
+        int row = userInfo.length;
+        int count = 0;
+        for (int i = 0; i < row; i++) {
+            // this pulls the account types
+        	
+            // this pulls the username
+            String ucheck = userInfo[i][1];
+            // this pulls the password
+            String pCheck = userInfo[i][2];
+            // if username matches password then success
+            if (ucheck.equals(username) && pCheck.equals(oldPassword)) {
+            	
+            } else {
+                count++;
+            }
+            // if the end of the file is reached without a login then the login fails
+            if (count == row) {
+                System.out.println("Login Failed");            }
+        }
+        
+        //return false;
+    }
+    
     // main method that asks for password/username and logs in the user if successful.
     public static void main(String[] args) throws FileNotFoundException {
     	/*
