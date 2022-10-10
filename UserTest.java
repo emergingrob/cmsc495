@@ -118,7 +118,7 @@ public class UserTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        writer.println("a admin admin");
+        writer.print("a admin admin");
         writer.close();
     }
     
