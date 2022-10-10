@@ -7,15 +7,21 @@
 
 public class Book {
 
-    private String author, title, isbn;
+    private String author, title, isbn, checkout;
     private boolean isCheckedOut;
 
     // Constructor
-    public Book(String author, String title, String isbn) {
+    public Book(String author, String title, String isbn, String checkout) {
         this.author = author;
         this.title = title;
         this.isbn = isbn;
-        this.isCheckedOut = false;
+        this.checkout = checkout;
+        
+        // if there is a username in the checkout field
+        if (checkout.length() > 0)
+        	this.isCheckedOut = true;
+        else
+        	this.isCheckedOut = false;
     }
 
     // Getters
@@ -31,6 +37,15 @@ public class Book {
         return isbn;
     }
 
+    public String getCheckedOut() {
+        return checkout;
+    }
+    
+    // checkout field is set to user's name if it is checked out
+    public void checkout(String username) {
+    	checkout = username;
+    }
+    
     public boolean getCheckedOutStatus() {
         return isCheckedOut;
     }
