@@ -10,6 +10,13 @@
  *  Added createRegistationGui method
  *  Added JPanel createRegistration JPanel
  *  Modified class to integrate new registration panel and login
+ *  
+ * 10/09/22 Updates by Robert Miller
+ * Added add / remove books menu item and gui panel for admin users and check for user sign in	
+ * Added MyAccount menu item and gui panel to display a list of checked out users
+ * 	Users can return books for this panel
+ * Updated search results to update checkout status of books as they are checked out
+ * 
  */
 
 import java.awt.BorderLayout;
@@ -41,6 +48,8 @@ import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 
 public class LibraryGUI implements ActionListener, Runnable {
 
@@ -85,6 +94,14 @@ public class LibraryGUI implements ActionListener, Runnable {
 	JPasswordField registerPasswordField;
 	JButton submitUserRegistertationButton;
 	
+	JLabel newBookTitleLabel;
+	JTextField newBookTitleField;
+	JLabel newBookAuthorLabel;
+	JTextField newBookAuthorField;
+	JLabel newBookISBNLabel;
+	JTextField newBookISBNField;
+	JButton addBookButton;
+	
     private static Library library;
     
     @Override // java.awt.event.ActionListener
@@ -119,6 +136,23 @@ public class LibraryGUI implements ActionListener, Runnable {
         	// go back to main screen after user account creation
         	createSearchGui();
         }
+        if (event.getSource() == addBookButton) {
+        	if (!newBookTitleField.getText().equals("") && !newBookAuthorField.getText().equals("") && newBookISBNField.getText().length() > 8) {
+        		try {
+					library.addNewBook(newBookTitleField.getText(), newBookAuthorField.getText(), newBookISBNField.getText());
+					JOptionPane.showMessageDialog(frame, "Book aded!");
+				} catch (ParserConfigurationException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (TransformerException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+        	}
+        	else {
+        		JOptionPane.showMessageDialog(frame, "Invalid values entered!");
+        	}
+        }
     }
 
     @Override // java.lang.Runnable
@@ -129,13 +163,46 @@ public class LibraryGUI implements ActionListener, Runnable {
         createSearchGui();
     }
 
+    private void addCheckedOutBooks(Book book) {
+        panel.add(Box.createVerticalStrut(10));
+       
+        JLabel bookInfo = new JLabel();
+        bookInfo.setText(book.getTitle() + "  by " + book.getAuthor());
+        System.out.println("checked out: " + book.getTitle());
+        panel.add(bookInfo);
+        
+        JButton button = new JButton("Return");
+        Dimension size = new Dimension(130, 30);
+        button.setMaximumSize(size);
+        button.setMinimumSize(size);
+        button.setPreferredSize(size);
+        
+		button.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// use blank as second parameter to have book returned
+				library.updateCheckoutStatus(book, "");
+				
+				JOptionPane.showMessageDialog(frame, book.getTitle() + " returned!");
+				createMyAccountGui();
+			}
+		});
+            
+        
+		panel.add(button);
+        
+        panel.revalidate();
+    }
+    
     private void addSearchResult(Book book) {
+    	System.out.println("Adding search result");
         panel.add(Box.createVerticalStrut(10));
        
         JLabel bookInfo = new JLabel();
         bookInfo.setText(book.getTitle() + "  by " + book.getAuthor());
         panel.add(bookInfo);
-        
+                
         if (book.getCheckedOutStatus() == false) {
             JButton button = new JButton("Checkout");
             Dimension size = new Dimension(130, 30);
@@ -147,8 +214,19 @@ public class LibraryGUI implements ActionListener, Runnable {
 				
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					book.setCheckedOutStatus(true);
-					JOptionPane.showMessageDialog(frame, book.getTitle() + " checked out!");
+					if (userSignedIn) {					
+						library.updateCheckoutStatus(book, currentUser);
+						
+						JOptionPane.showMessageDialog(frame, book.getTitle() + " checked out!");
+						
+						// go back to search
+						createSearchGui();
+						fillSearchResults(searchField.getText());
+					}
+					else {
+						JOptionPane.showMessageDialog(frame, "Please sign in first");
+
+					}
 				}
 			});
             
@@ -156,6 +234,7 @@ public class LibraryGUI implements ActionListener, Runnable {
         }
         else {
         	JLabel notAvailable = new JLabel("Not Available");
+        	notAvailable.setFont(new Font("Serif", Font.BOLD, 18));
         	panel.add(notAvailable);
         }
         
@@ -256,6 +335,64 @@ public class LibraryGUI implements ActionListener, Runnable {
     	return registrationPanel;
     }
     
+    private JPanel createMyAccountPanel() {
+    	JPanel myAccountPanel = new JPanel();
+    	
+        LayoutManager mgr = new BoxLayout(myAccountPanel, BoxLayout.Y_AXIS);        
+        myAccountPanel.setLayout(mgr);
+        
+
+        JLabel myAccountTitle = new JLabel("My Account", SwingConstants.CENTER);
+        myAccountTitle.setFont(new Font("Serif", Font.BOLD, 18));
+        myAccountTitle.setBounds(100, 8, 70, 80);
+        
+        JLabel myCheckedOutBookLabel = new JLabel("My checked out books:");
+        
+        
+        myAccountPanel.add(myAccountTitle);
+        myAccountPanel.add(myCheckedOutBookLabel);
+        
+        
+        return myAccountPanel;
+    }
+    
+    private JPanel createAddRemovePanel() {
+    	JPanel addRemovePanel = new JPanel();
+    	
+        LayoutManager mgr = new BoxLayout(addRemovePanel, BoxLayout.Y_AXIS);        
+        addRemovePanel.setLayout(mgr);
+        
+        JLabel addRemoveTitle = new JLabel("Add Book", SwingConstants.CENTER);
+        addRemovePanel.setFont(new Font("Serif", Font.BOLD, 18));
+        addRemovePanel.setBounds(100, 8, 70, 80);
+        
+    	newBookTitleLabel = new JLabel("Book Title");
+    	newBookTitleField = new JTextField(30);
+    	newBookTitleField.setMaximumSize( newBookTitleField.getPreferredSize());
+    	
+    	newBookAuthorLabel = new JLabel("Book Author");
+    	newBookAuthorField = new JTextField(30);
+    	newBookAuthorField.setMaximumSize( newBookAuthorField.getPreferredSize());
+    	
+    	newBookISBNLabel = new JLabel("Book ISBN");
+    	newBookISBNField = new JTextField(30);
+    	newBookISBNField.setMaximumSize( newBookISBNField.getPreferredSize());
+    	
+    	addBookButton = new JButton("Add Book");
+    	addBookButton.addActionListener(this);
+    	
+        addRemovePanel.add(addRemoveTitle);
+        addRemovePanel.add(newBookTitleLabel);
+        addRemovePanel.add(newBookTitleField);
+        addRemovePanel.add(newBookAuthorLabel);
+        addRemovePanel.add(newBookAuthorField);
+        addRemovePanel.add(newBookISBNLabel);
+        addRemovePanel.add(newBookISBNField);
+        addRemovePanel.add(addBookButton);
+        
+        return addRemovePanel;
+    }
+    
     private JPanel createLoginPanel() {
     	JPanel loginPanel = new JPanel();
     	    	
@@ -301,7 +438,6 @@ public class LibraryGUI implements ActionListener, Runnable {
     }
     
     private void createRegistrationGui() {
-    	//frame.removeAll();
     	pane.removeAll();       
     	pane.add(createRegistrationPanel(), BorderLayout.PAGE_START);
     	pane.add(createLoginPanel(), BorderLayout.PAGE_END);
@@ -309,11 +445,54 @@ public class LibraryGUI implements ActionListener, Runnable {
     	frame.pack();
     	frame.setVisible(true);
     }
+    
+	private void createMyAccountGui() {
+		if (userSignedIn) {
+	    	pane.removeAll();       
+	    	pane.add(createMyAccountPanel(), BorderLayout.PAGE_START);
+	        pane.add(createCheckedoutBooksPanel(), BorderLayout.CENTER);
+	    	pane.add(createLoginPanel(), BorderLayout.PAGE_END);
+	    	pane.revalidate();
+	        showCheckedOutBooks();
+	    	frame.pack();
+	    	frame.setVisible(true);
+		}
+		else {
+			JOptionPane.showMessageDialog(frame, "Please sign in first!");
+		}
+	}
+	
+	private void createAddRemoveGui() {
+		if (userSignedIn && UserTest.isAdmin) {
+	    	pane.removeAll();       
+	    	pane.add(createAddRemovePanel(), BorderLayout.PAGE_START);
+	    	pane.add(createLoginPanel(), BorderLayout.PAGE_END);
+	    	pane.revalidate();
+	    	frame.pack();
+	    	frame.setVisible(true);
+		}
+		else {
+			JOptionPane.showMessageDialog(frame, "Must be signed in as an admin!");
+		}
+	}
 
     private JScrollPane createSearchResultsPanel() {
         panel = new JPanel();
         LayoutManager mgr = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(mgr);
+        
+        JScrollPane scrollPane = new JScrollPane(panel, 
+                                                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(500, 400));
+        return scrollPane;
+    }
+    
+    private JScrollPane createCheckedoutBooksPanel() {
+        panel = new JPanel();
+        LayoutManager mgr = new BoxLayout(panel, BoxLayout.Y_AXIS);
+        panel.setLayout(mgr);
+        
         JScrollPane scrollPane = new JScrollPane(panel, 
                                                  ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                  ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -323,7 +502,7 @@ public class LibraryGUI implements ActionListener, Runnable {
 
 	private void fillSearchResults(String searchEntry) {
 		ArrayList<Book> searchListFound = library.findBooks(searchEntry);
-        
+        System.out.println("Searches found: " + searchListFound.size());
 		if (searchListFound.size() > 0) {
 			String results = "";
 			
@@ -337,6 +516,22 @@ public class LibraryGUI implements ActionListener, Runnable {
 		}
 		else {
             JOptionPane.showMessageDialog(frame, "No results found for: " + searchEntry);
+		}
+	}
+	
+	private void showCheckedOutBooks() {
+		ArrayList<Book> checkedOutBooks = library.findCheckedOutBooks(currentUser);
+        
+		if (checkedOutBooks.size() > 0) {
+			String results = "";
+			
+			for (int i = 0; i < checkedOutBooks.size(); i++) {
+				results += checkedOutBooks.get(i).getTitle() + "\n";
+				addCheckedOutBooks(checkedOutBooks.get(i));
+			}
+			
+			System.out.println("Found: " + results);
+		
 		}
 	}
     
@@ -353,6 +548,10 @@ public class LibraryGUI implements ActionListener, Runnable {
 					createSearchGui();
 				else if (cmd.equals("New user registration"))
 					createRegistrationGui();
+				else if (cmd.equals("My Account"))
+					createMyAccountGui();
+				else if (cmd.equals("Add / Remove Books"))
+					createAddRemoveGui();
 			}
 			
 		};
@@ -364,10 +563,20 @@ public class LibraryGUI implements ActionListener, Runnable {
 		searchCmd.addActionListener(listener);
 		mainMenu.add(searchCmd);
 		
-		// search
+		// new user registration
 		JMenuItem registerCmd = new JMenuItem("New user registration");
 		registerCmd.addActionListener(listener);
 		mainMenu.add(registerCmd);
+		
+		// view my account
+		JMenuItem myAccountCmd = new JMenuItem("My Account");
+		myAccountCmd.addActionListener(listener);
+		mainMenu.add(myAccountCmd);
+		
+		// add / remove books
+		JMenuItem addRemoveCmd = new JMenuItem("Add / Remove Books");
+		addRemoveCmd.addActionListener(listener);
+		mainMenu.add(addRemoveCmd);
 		
 		// build menu bar and add main menu to it
 		JMenuBar bar = new JMenuBar();
