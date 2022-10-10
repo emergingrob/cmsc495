@@ -119,6 +119,8 @@ public class UserTest {
 			e.printStackTrace();
 		}
         writer.print("a admin admin");
+        writer.write(System.getProperty("line.separator"));
+        writer.print("u user user");
         writer.close();
     }
     
